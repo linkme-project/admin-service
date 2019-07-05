@@ -1,8 +1,13 @@
+// TODO: refactoring
+/* eslint-disable require-atomic-updates */
 require('dotenv').config();
 
 const Router = require('koa-router');
 
-const contentController = require('../contents/content.controller');
+const contentController = require('../controllers/content.controller');
+const fileController = require('../controllers/file.controller');
+const commentController = require('../controllers/comment.controller');
+
 const RESULT_CODE = require('../constants').RESULT_CODE;
 
 const contentApi = new Router();
@@ -14,8 +19,8 @@ contentApi.post('/contents', async ctx => {
       resultCode: result,
       resultMessage: 
         result == RESULT_CODE.FAIL ? 'insert content failure' :
-        result == RESULT_CODE.SUCCESS ? 'insert content success' : 
-        result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
+          result == RESULT_CODE.SUCCESS ? 'insert content success' : 
+            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
       returnValue: null
     };
   } catch (ex) {
@@ -44,7 +49,7 @@ contentApi.get('/contents', async ctx => {
   }
 });
 
-contentApi.get('/contents/:sn', async ctx => {
+contentApi.get('/contents/:_id', async ctx => {
   try {
     const content = await contentController.searchOne(ctx);
     ctx.body = {
@@ -61,19 +66,15 @@ contentApi.get('/contents/:sn', async ctx => {
   }
 });
 
-contentApi.put('/contents', ctx => {  
-  // TODO
-});
-
-contentApi.delete('/contents', async ctx => {
+contentApi.put('/contents', async ctx => {  
   try {
-    const result = await contentController.delete(ctx);
+    const result = await contentController.update(ctx);
     ctx.body = {
       resultCode: result,
       resultMessage: 
-        result == RESULT_CODE.FAIL ? 'mongodb delete failure' :
-        result == RESULT_CODE.SUCCESS ? 'successfully delete content' : 
-        result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
+        result == RESULT_CODE.FAIL ? 'update content failure' :
+          result == RESULT_CODE.SUCCESS ? 'update content success' : 
+            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
       returnValue: null
     };
   } catch (ex) {
@@ -83,6 +84,62 @@ contentApi.delete('/contents', async ctx => {
       returnValue: null
     };
   }
+});
+
+contentApi.delete('/contents', async ctx => {
+  try {
+    const result = await contentController.delete(ctx);
+    ctx.body = {
+      resultCode: result,
+      resultMessage: 
+        result == RESULT_CODE.FAIL ? 'mongodb delete failure' :
+          result == RESULT_CODE.SUCCESS ? 'successfully delete content' : 
+            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
+      returnValue: null
+    };
+  } catch (ex) {
+    ctx.body = {
+      resultCode: RESULT_CODE.FAIL,
+      resultMessage: ex.message,
+      returnValue: null
+    };
+  }
+});
+
+contentApi.post('/comments', async ctx => {
+  try {
+    const result = await commentController.create(ctx);
+    ctx.body = {
+      resultCode: result,
+      resultMessage: 
+        result == RESULT_CODE.FAIL ? 'insert comment failure' :
+          result == RESULT_CODE.SUCCESS ? 'insert comment success' : 
+            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
+      returnValue: null
+    };
+  } catch (ex) {
+    ctx.body = {
+      resultCode: RESULT_CODE.FAIL,
+      resultMessage: ex.message,
+      returnValue: null
+    };
+  }
+});
+
+contentApi.put('/comments', async ctx => {
+
+});
+
+contentApi.delete('/comments', async ctx => {
+
+});
+
+contentApi.post('/files', async ctx => {
+
+});
+
+contentApi.delete('/files', async ctx => {
+
 });
 
 module.exports = contentApi;

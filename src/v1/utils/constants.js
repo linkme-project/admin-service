@@ -32,7 +32,7 @@ module.exports = {
   },
   getResultCodeKeys (resultCode) {
     for (let code in this.RESULT_CODE) {
-      if (this.RESULT_MESSAGE[code] == resultCode) {
+      if (this.RESULT_CODE[code] == resultCode) {
         return code;
       }
     }

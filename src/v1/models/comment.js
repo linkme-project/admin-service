@@ -6,6 +6,8 @@ const CommentSchema = new Schema({
   content: String,
   userId: String,
   regDate: Date
+}, {
+  versionKey: false
 });
 
 module.exports = CommentSchema;
