@@ -4,9 +4,11 @@ const Schema = mongoose.Schema;
 const AttachedFileSchema = new Schema({
   fileId: String,
   fileName: String,
-  fileUrl: String
+  fileUrl: String,
+  fileSize: Number
 }, {
-  versionKey: false
+  versionKey: false,
+  _id: false
 });
 
 module.exports = AttachedFileSchema;

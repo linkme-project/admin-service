@@ -1,66 +1,55 @@
 const Content = require('../models/content');
 const validator = require('validator');
-const RESULT_CODE = require('../constants').RESULT_CODE;
+const { RESULT_CODE, RESULT_MESSAGE } = require('../utils/constants');
+const utils = require('../utils/utils');
 
-// return resultCode
-exports.create = async (ctx) => {
+exports.create = ctx => {
   const {
     title,          // required
     content,        // required
     userId,         // required
+    type,           // required
     thumbnail,
     additional,
     attachedFiles,
-    type,           // required
     key
   } = ctx.request.body;
-  
-  // check parameters 
+
+  // parameters validation
   if (!title || !content || !userId || type === undefined || !validator.isInt(type.toString())) {
-    return RESULT_CODE.INVALID_PARAMS;
+    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  // get next sn
-  let result, nextSn;
-  try {
-    result = await Content.find({ type: type }).exec();
-    if (result.length == 0) {
-      nextSn = 1;
-    } else {
-      nextSn = result[result.length - 1].sn + 1;
-    }  
-  } catch (ex) {
-    return RESULT_CODE.FAIL;
-  }
-  
-  let comments = [];
-  let regDate = new Date();
+  return Content.find({ type: type })
+    .then(contents => {
+      // get next sn
+      if (contents.length == 0) return 1;
+      else return contents[contents.length - 1].sn + 1; })
+    .then(nextSn => {
+      // create & save new item
+      let regDate = new Date();
 
-  const newItem = new Content({
-    sn: nextSn,
-    title,
-    content,
-    userId,
-    thumbnail,
-    additional,
-    attachedFiles,
-    comments,  // comments
-    regDate,
-    type,
-    key
-  });
-  
-  try {
-    await newItem.save();
-  } catch (ex) {
-    return RESULT_CODE.FAIL;
-  }
+      const newItem = new Content({
+        sn: nextSn,
+        title,
+        content,
+        userId,
+        thumbnail,
+        additional,
+        attachedFiles,
+        comments: [],  // comments
+        regDate,
+        type,
+        key
+      });
 
-  return RESULT_CODE.SUCCESS;  
+      newItem.save();
+      return RESULT_CODE.SUCCESS;
+    });
 };
 
 // return contents array
-exports.search = async (ctx) => {
+exports.search = ctx => {
   const {
     userId,
     key,
@@ -69,70 +58,67 @@ exports.search = async (ctx) => {
     pageNo    // required
   } = ctx.request.query;
 
-  // check parameters
+  // parameters validation
   if (type === undefined || pageSize === undefined || pageNo === undefined || !validator.isInt(type.toString())) {
-    throw { resultCode: RESULT_CODE.INVALID_PARAMS, resultMessage: 'Invalid Parameters' };
+    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  let result = await Content.find((userId ? { type, userId } : { type })).exec();
+  return Content.find(utils.deleteUndefinedKeys({ type, userId, key }))
+    .then(contents => {
+      // TODO: paging
 
-  // TODO: paging
-
-  return result;
+      return contents;
+    });
 };
 
-exports.searchOne = async (ctx) => {
+exports.searchOne = ctx => {
   const { type } = ctx.request.query;
   const { _id } = ctx.params;
 
   // check parameters 
-  if (type === undefined || _id === undefined) {
-    throw { resultCode: RESULT_CODE.INVALID_PARAMS, resultMessage: 'Invalid Parameters' };
+  if (type === undefined || _id === undefined || !validator.isInt(type)) {
+    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  if (!validator.isInt(type)) {
-    throw { resultCode: RESULT_CODE.INVALID_PARAMS, resultMessage: 'Invalid Parameters' };
-  }
-
-  let result = await Content.find({ type, _id }).exec();
-  if (result.length === 0) return null;
-
-  return result;
+  return Content.findOne({ type, _id });
 };
 
-exports.update = async (ctx) => {
-  const { _id, title, content, userId, attachedFiles } = ctx.request.body;
+exports.update = ctx => {
+  const { _id, title, content, userId, thumbnail, additional, attachedFiles, key } = ctx.request.body;
 
   // check parameters 
   if (_id === undefined) {
-    return RESULT_CODE.INVALID_PARAMS;
+    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  const updateItem = {
-    title: title,
-    content: content,
-    userId: userId,
-    attachedFiles: attachedFiles
-  };
+  const updateItem = utils.deleteUndefinedKeys({
+    title,
+    content,
+    userId,
+    thumbnail,
+    additional,
+    attachedFiles,
+    key
+  });
 
-  try {
-    await Content.update({ _id }, updateItem);
-  } catch (ex) {
-    return RESULT_CODE.FAIL;
-  }
-
-  return RESULT_CODE.SUCCESS;
+  return Content.updateOne({ _id }, updateItem)
+    .then(result => {
+      if (result.ok == 1) return RESULT_CODE.SUCCESS;
+      else return RESULT_CODE.FAIL;
+    });
 };
 
-exports.delete = async (ctx) => {
+exports.delete = ctx => {
   const { _id } = ctx.request.body;
 
   // check parameters 
   if (_id === undefined) {
-    throw { resultCode: RESULT_CODE.INVALID_PARAMS, resultMessage: 'Invalid Parameters' };
+    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  let result = await Content.remove({ _id }).exec();
-  if (result.ok == 1) return RESULT_CODE.SUCCESS;
-  else return RESULT_CODE.FAIL;
+  return Content.deleteOne({ _id })
+    .then(result => {
+      if (result.ok == 1) return RESULT_CODE.SUCCESS;
+      else return RESULT_CODE.FAIL;
+    });
 };

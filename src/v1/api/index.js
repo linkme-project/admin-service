@@ -8,138 +8,138 @@ const contentController = require('../controllers/content.controller');
 const fileController = require('../controllers/file.controller');
 const commentController = require('../controllers/comment.controller');
 
-const RESULT_CODE = require('../constants').RESULT_CODE;
+const { RESULT_CODE } = require('../utils/constants');
+const utils = require('../utils/utils');
 
 const contentApi = new Router();
 
 contentApi.post('/contents', async ctx => {
-  try {
-    const result = await contentController.create(ctx);
-    ctx.body = {
-      resultCode: result,
-      resultMessage: 
-        result == RESULT_CODE.FAIL ? 'insert content failure' :
-          result == RESULT_CODE.SUCCESS ? 'insert content success' : 
-            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
-      returnValue: null
-    };
-  } catch (ex) {
-    ctx.body = {
-      resultCode: RESULT_CODE.FAIL,
-      resultMessage: ex.message,
-      returnValue: null
-    };
-  }
+  await contentController.create(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse(resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse(RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.get('/contents', async ctx => {
-  try {
-    const contents = await contentController.search(ctx);
-    ctx.body = {
-      resultCode: contents.length === 0 ? RESULT_CODE.DATA_EMPTY : RESULT_CODE.SUCCESS,
-      resultMessage: contents.length === 0 ? 'Data is not exist' : null,
-      returnValue: contents
-    };
-  } catch (ex) {
-    ctx.body = {
-      resultCode: ex.resultCode ? ex.resultCode : RESULT_CODE.FAIL,
-      resultMessage: ex.resultMessage ? ex.resultMessage : ex.message,
-      returnValue: null
-    };
-  }
+  await contentController.search(ctx)
+    .then(contents => {
+      // change field name (_id to commentId)
+      contents.map(content => {
+        let comments = JSON.parse(JSON.stringify(content.comments));
+        comments.map(comment => {
+          comment.commentId = comment._id;
+          delete comment._id;
+        });
+        Object.assign(content.comments, comments);
+      });
+      return contents;
+    })
+    .then(contents => {
+      if (contents.length === 0) {
+        ctx.body = utils.createResponse (RESULT_CODE.DATA_EMPTY, utils.getResultMessage(RESULT_CODE.DATA_EMPTY), []);
+      } else {
+        ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, contents);
+      }
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.get('/contents/:_id', async ctx => {
-  try {
-    const content = await contentController.searchOne(ctx);
-    ctx.body = {
-      resultCode: content === null ? RESULT_CODE.DATA_EMPTY : RESULT_CODE.SUCCESS,
-      resultMessage: content === null? 'Data is not exist' : null,
-      returnValue: content
-    };
-  } catch (ex) {
-    ctx.body = {
-      resultCode: ex.resultCode ? ex.resultCode : RESULT_CODE.FAIL,
-      resultMessage: ex.resultMessage ? ex.resultMessage : ex.message,
-      returnValue: null
-    };
-  }
+  await contentController.searchOne(ctx)
+    .then(content => {
+      let comments = JSON.parse(JSON.stringify(content.comments));
+      comments.map(comment => {
+        comment.commentId = comment._id;
+        delete comment._id;
+      });
+      Object.assign(content.comments, comments);
+      return content;
+    })
+    .then(content => {
+      if (!content) {
+        ctx.body = utils.createResponse (RESULT_CODE.DATA_EMPTY, utils.getResultMessage(RESULT_CODE.DATA_EMPTY), null);
+      } else {
+        ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, content);
+      }
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.put('/contents', async ctx => {  
-  try {
-    const result = await contentController.update(ctx);
-    ctx.body = {
-      resultCode: result,
-      resultMessage: 
-        result == RESULT_CODE.FAIL ? 'update content failure' :
-          result == RESULT_CODE.SUCCESS ? 'update content success' : 
-            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
-      returnValue: null
-    };
-  } catch (ex) {
-    ctx.body = {
-      resultCode: RESULT_CODE.FAIL,
-      resultMessage: ex.message,
-      returnValue: null
-    };
-  }
+  await contentController.update(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.delete('/contents', async ctx => {
-  try {
-    const result = await contentController.delete(ctx);
-    ctx.body = {
-      resultCode: result,
-      resultMessage: 
-        result == RESULT_CODE.FAIL ? 'mongodb delete failure' :
-          result == RESULT_CODE.SUCCESS ? 'successfully delete content' : 
-            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
-      returnValue: null
-    };
-  } catch (ex) {
-    ctx.body = {
-      resultCode: RESULT_CODE.FAIL,
-      resultMessage: ex.message,
-      returnValue: null
-    };
-  }
+  await contentController.delete(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.post('/comments', async ctx => {
-  try {
-    const result = await commentController.create(ctx);
-    ctx.body = {
-      resultCode: result,
-      resultMessage: 
-        result == RESULT_CODE.FAIL ? 'insert comment failure' :
-          result == RESULT_CODE.SUCCESS ? 'insert comment success' : 
-            result == RESULT_CODE.INVALID_PARAMS ? 'invalid parameters' : null,
-      returnValue: null
-    };
-  } catch (ex) {
-    ctx.body = {
-      resultCode: RESULT_CODE.FAIL,
-      resultMessage: ex.message,
-      returnValue: null
-    };
-  }
+  await commentController.create(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.put('/comments', async ctx => {
-
+  await commentController.update(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.delete('/comments', async ctx => {
-
+  await commentController.delete(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.post('/files', async ctx => {
-
+  await fileController.create(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 contentApi.delete('/files', async ctx => {
-
+  await fileController.delete(ctx)
+    .then(resultCode => {
+      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+    })
+    .catch(ex => {
+      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+    });
 });
 
 module.exports = contentApi;
