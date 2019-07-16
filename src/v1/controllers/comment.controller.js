@@ -1,48 +1,57 @@
+const validator = require('validator');
+const utils = require('../utils/utils');
 const Content = require('../models/content');
 const Comment = require('../models/comment');
+
+const mongoose = require('mongoose');
+
 const { RESULT_CODE } = require('../utils/constants');
-const utils = require('../utils/utils');
 
 exports.create = (ctx) => {
-  const { _id, content, userId } = ctx.request.body;
+  const { content, userId } = ctx.request.body;
+  const { sn } = ctx.params;
 
   // check parameters 
-  if (_id === undefined) {
+  if (!validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.updateOne({ _id }, { $push: { comments: { content, userId }}})
+  const CommentModel = mongoose.model('comment', Comment);
+  const newComment = new CommentModel({
+    content,
+    userId
+  });
+
+  return Content.updateOne({ sn }, { $push: { comments: newComment}})
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });
 };
 
 exports.update = (ctx) => {
-  const { commentId, content, userId } = ctx.request.body;
+  const { content, userId } = ctx.request.body;
+  const { sn, commentId } = ctx.params;
 
   // check parameters 
-  if ( commentId === undefined) {
+  if (commentId == undefined || !validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
   return Content.updateOne({ 'comments._id': commentId }, { 'comments.$': { content, userId }})
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });};
 
 exports.delete = (ctx) => {
-  const { _id, commentId } = ctx.request.body;
+  const { sn, commentId } = ctx.params;
 
   // check parameters 
-  if (_id === undefined || commentId === undefined) {
+  if (commentId == undefined || !validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.updateOne({ _id }, { $pull: { comments: { _id: commentId }}})
+  return Content.updateOne({ sn }, { $pull: { comments: { _id: commentId }}})
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });
 };

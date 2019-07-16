@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const autoIncrement = require('mongoose-auto-increment');
 const AttachedFile = require('./attachedFile');
 const Comment = require('./comment');
 const Additional = require('./additional');
@@ -6,7 +7,6 @@ const Additional = require('./additional');
 const Schema = mongoose.Schema;
 
 const ContentSchema = new Schema({
-  sn: { type: Number, required: true },
   title: { type: String, required: true },
   content: { type: String, required: true },
   userId: { type: String, required: true, trim: true },
@@ -15,10 +15,12 @@ const ContentSchema = new Schema({
   attachedFiles: [AttachedFile],
   comments: [Comment],
   regDate: { type: Date, default: Date.now },
-  type: { type: Number, required: true },
+  type: { type: String, required: true },
   key: { type: String }
 }, {
-  versionKey: false
+  versionKey: false,
+  _id: false
 });
 
-module.exports = mongoose.model('Content', ContentSchema);
+ContentSchema.plugin(autoIncrement.plugin, { model: 'content', field: 'sn', startAt: 1 });
+module.exports = mongoose.model('content', ContentSchema);

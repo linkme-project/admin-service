@@ -1,6 +1,7 @@
 const Content = require('../models/content');
 const validator = require('validator');
-const { RESULT_CODE, RESULT_MESSAGE } = require('../utils/constants');
+
+const { RESULT_CODE } = require('../utils/constants');
 const utils = require('../utils/utils');
 
 exports.create = ctx => {
@@ -8,7 +9,6 @@ exports.create = ctx => {
     title,          // required
     content,        // required
     userId,         // required
-    type,           // required
     thumbnail,
     additional,
     attachedFiles,
@@ -16,36 +16,29 @@ exports.create = ctx => {
   } = ctx.request.body;
 
   // parameters validation
-  if (!title || !content || !userId || type === undefined || !validator.isInt(type.toString())) {
+  if (!title || !content || !userId) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.find({ type: type })
-    .then(contents => {
-      // get next sn
-      if (contents.length == 0) return 1;
-      else return contents[contents.length - 1].sn + 1; })
-    .then(nextSn => {
-      // create & save new item
-      let regDate = new Date();
-
-      const newItem = new Content({
-        sn: nextSn,
-        title,
-        content,
-        userId,
-        thumbnail,
-        additional,
-        attachedFiles,
-        comments: [],  // comments
-        regDate,
-        type,
-        key
-      });
-
-      newItem.save();
-      return RESULT_CODE.SUCCESS;
+  return new Promise((resolve, reject) => {
+    const type = ctx.contentType;
+    const regDate = new Date();
+    const newItem = new Content({
+      title,
+      content,
+      userId,
+      thumbnail,
+      additional,
+      attachedFiles,
+      comments: [],  // comments
+      regDate,
+      type,
+      key
     });
+
+    newItem.save();
+    resolve(RESULT_CODE.SUCCESS);
+  });
 };
 
 // return contents array
@@ -53,41 +46,28 @@ exports.search = ctx => {
   const {
     userId,
     key,
-    type,     // required
-    pageSize, // required
-    pageNo    // required
   } = ctx.request.query;
 
-  // parameters validation
-  if (type === undefined || pageSize === undefined || pageNo === undefined || !validator.isInt(type.toString())) {
-    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
-  }
-
-  return Content.find(utils.deleteUndefinedKeys({ type, userId, key }))
-    .then(contents => {
-      // TODO: paging
-
-      return contents;
-    });
+  return Content.find(utils.deleteUndefinedKeys({ type: ctx.contentType, userId, key }));
 };
 
 exports.searchOne = ctx => {
-  const { type } = ctx.request.query;
-  const { _id } = ctx.params;
+  const { sn } = ctx.params;
 
   // check parameters 
-  if (type === undefined || _id === undefined || !validator.isInt(type)) {
+  if (!validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.findOne({ type, _id });
+  return Content.findOne({ sn });
 };
 
 exports.update = ctx => {
-  const { _id, title, content, userId, thumbnail, additional, attachedFiles, key } = ctx.request.body;
+  const { title, content, userId, thumbnail, additional, attachedFiles, key } = ctx.request.body;
+  const { sn } = ctx.params;
 
   // check parameters 
-  if (_id === undefined) {
+  if (!validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
@@ -101,24 +81,22 @@ exports.update = ctx => {
     key
   });
 
-  return Content.updateOne({ _id }, updateItem)
+  return Content.updateOne({ sn }, updateItem)
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });
 };
 
 exports.delete = ctx => {
-  const { _id } = ctx.request.body;
+  const { sn } = ctx.params;
 
   // check parameters 
-  if (_id === undefined) {
+  if (!validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.deleteOne({ _id })
+  return Content.deleteOne({ sn })
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });
 };

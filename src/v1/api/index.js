@@ -13,133 +13,127 @@ const utils = require('../utils/utils');
 
 const contentApi = new Router();
 
-contentApi.post('/contents', async ctx => {
-  await contentController.create(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse(resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse(RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.post(['/notices', '/faqs', '/events', '/questions'], async ctx => {
+  try {
+    const resultCode = await contentController.create(ctx);
+    ctx.body = utils.createResponse(resultCode, utils.getResultMessage(resultCode), null);
+  } catch(ex) {
+    ctx.body = utils.createResponse(RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.get('/contents', async ctx => {
-  await contentController.search(ctx)
-    .then(contents => {
-      // change field name (_id to commentId)
-      contents.map(content => {
-        let comments = JSON.parse(JSON.stringify(content.comments));
-        comments.map(comment => {
-          comment.commentId = comment._id;
-          delete comment._id;
-        });
-        Object.assign(content.comments, comments);
-      });
-      return contents;
-    })
-    .then(contents => {
-      if (contents.length === 0) {
-        ctx.body = utils.createResponse (RESULT_CODE.DATA_EMPTY, utils.getResultMessage(RESULT_CODE.DATA_EMPTY), []);
-      } else {
-        ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, contents);
-      }
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.get(['/notices', '/faqs', '/events', '/questions'], async (ctx, next) => {  
+  try {
+    const contents = await contentController.search(ctx);
+    if (contents.length === 0) {
+      ctx.body = utils.createResponse (RESULT_CODE.DATA_EMPTY, utils.getResultMessage(RESULT_CODE.DATA_EMPTY), []);
+    } else {
+      ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, contents);
+    }
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.get('/contents/:_id', async ctx => {
-  await contentController.searchOne(ctx)
-    .then(content => {
-      let comments = JSON.parse(JSON.stringify(content.comments));
-      comments.map(comment => {
-        comment.commentId = comment._id;
-        delete comment._id;
-      });
-      Object.assign(content.comments, comments);
-      return content;
-    })
-    .then(content => {
-      if (!content) {
-        ctx.body = utils.createResponse (RESULT_CODE.DATA_EMPTY, utils.getResultMessage(RESULT_CODE.DATA_EMPTY), null);
-      } else {
-        ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, content);
-      }
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.get(['/notices/:sn', '/faqs/:sn', '/events/:sn', '/questions/:sn'], async ctx => {
+  try {
+    const content = await contentController.searchOne(ctx);
+    if (content) {
+      ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, content);
+    } else {
+      ctx.body = utils.createResponse (RESULT_CODE.DATA_EMPTY, utils.getResultMessage(RESULT_CODE.DATA_EMPTY), null);
+    }  
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.put('/contents', async ctx => {  
-  await contentController.update(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.put(['/notices/:sn', '/faqs/:sn', '/events/:sn', '/questions/:sn'], async ctx => {
+  try {
+    const resultCode = await contentController.update(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);  
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.delete('/contents', async ctx => {
-  await contentController.delete(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.delete(['/notices/:sn', '/faqs/:sn', '/events/:sn', '/questions/:sn'], async ctx => {
+  try {
+    const resultCode = await contentController.delete(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);  
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.post('/comments', async ctx => {
-  await commentController.create(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.post([
+  '/notices/:sn/comments', 
+  '/faqs/:sn/comments', 
+  '/events/:sn/comments', 
+  '/questions/:sn/comments'], 
+async ctx => {
+  try {
+    const resultCode = await commentController.create(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);  
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.put('/comments', async ctx => {
-  await commentController.update(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.put([
+  '/notices/:sn/comments/:commentId', 
+  '/faqs/:sn/comments/:commentId', 
+  '/events/:sn/comments/:commentId', 
+  '/questions/:sn/comments/:commentId'], 
+async ctx => {
+  try {
+    const resultCode = await commentController.update(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.delete('/comments', async ctx => {
-  await commentController.delete(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.delete([
+  '/notices/:sn/comments/:commentId', 
+  '/faqs/:sn/comments/:commentId', 
+  '/events/:sn/comments/:commentId', 
+  '/questions/:sn/comments/:commentId'], 
+async ctx => {
+  try {
+    const resultCode = await commentController.delete(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.post('/files', async ctx => {
-  await fileController.create(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.post([
+  '/notices/:sn/files', 
+  '/faqs/:sn/files', 
+  '/events/:sn/files', 
+  '/questions/:sn/files'], 
+async ctx => {
+  try {
+    const resultCode = await fileController.create(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);  
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-contentApi.delete('/files', async ctx => {
-  await fileController.delete(ctx)
-    .then(resultCode => {
-      ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
-    })
-    .catch(ex => {
-      ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
-    });
+contentApi.delete([
+  '/notices/:sn/files/:fileId', 
+  '/faqs/:sn/files/:fileId', 
+  '/events/:sn/files/:fileId', 
+  '/questions/:sn/files/:fileId'], 
+async ctx => {
+  try {
+    const resultCode = await fileController.delete(ctx);
+    ctx.body = utils.createResponse (resultCode, utils.getResultMessage(resultCode), null);
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
 });
 
-module.exports = contentApi;
+module.exports = contentApi.routes();

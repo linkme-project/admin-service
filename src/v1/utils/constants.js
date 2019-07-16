@@ -13,5 +13,11 @@ module.exports = {
     FAIL: "api failure",
     DB_FAILURE: "mongodb failure",
     INVALID_PARAMS: "invalid parameters"
+  },
+  CONTENT_TYPE: {
+    NOTICE: 0,
+    FAQ: 1,
+    EVENTS: 2,
+    QUESTION: 3
   }
 };

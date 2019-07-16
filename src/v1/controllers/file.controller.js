@@ -1,33 +1,34 @@
-const Content = require('../models/content');
-const { RESULT_CODE } = require('../utils/constants');
+const validator = require('validator');
 const utils = require('../utils/utils');
+const Content = require('../models/content');
+
+const { RESULT_CODE } = require('../utils/constants');
 
 exports.create = (ctx) => {
-  const { _id, fileId, fileName, fileSize } = ctx.request.body;
+  const { fileId, fileName, fileSize } = ctx.request.body;
+  const { sn } = ctx.params;
 
   // check parameters 
-  if (_id === undefined) {
+  if (!validator.isInt(sn + '')) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.updateOne({ _id }, { $push: { attachedFiles: { fileId, fileName, fileSize }}})
+  return Content.updateOne({ sn }, { $push: { attachedFiles: { fileId, fileName, fileSize }}})
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });
 };
 
 exports.delete = (ctx) => {
-  const { _id, fileId } = ctx.request.body;
+  const { sn, fileId } = ctx.params;
 
   // check parameters
-  if (_id === undefined || fileId === undefined) {
+  if (!validator.isInt(sn + '') || fileId == undefined) {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.updateOne({ _id }, { $pull: { attachedFiles: { fileId }}})
+  return Content.updateOne({ sn }, { $pull: { attachedFiles: { fileId }}})
     .then(result => {
-      if (result.ok == 1) return RESULT_CODE.SUCCESS;
-      else return RESULT_CODE.FAIL;
+      return utils.getResultCodeByMongooseResult(result);
     });
 };

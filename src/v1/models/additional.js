@@ -6,7 +6,8 @@ const AdditionalSchema = new Schema({
   endDate: String,
   regUsers: Array
 }, {
-  versionKey: false
+  versionKey: false,
+  _id: false
 });
 
 module.exports = AdditionalSchema;

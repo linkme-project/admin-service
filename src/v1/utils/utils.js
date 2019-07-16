@@ -22,5 +22,11 @@ module.exports = {
       }
     }
     return null;
+  },
+  // Convert mongoose update or delete result to RESULT_CODE
+  getResultCodeByMongooseResult (result) {
+    if (result.ok == 1 && result.n == 1) return RESULT_CODE.SUCCESS;
+    else if (result.ok == 1 && result.n == 0) return RESULT_CODE.DATA_EMPTY;
+    else return RESULT_CODE.FAIL;
   }
 };
