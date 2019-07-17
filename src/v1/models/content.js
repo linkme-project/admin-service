@@ -18,8 +18,7 @@ const ContentSchema = new Schema({
   type: { type: String, required: true },
   key: { type: String }
 }, {
-  versionKey: false,
-  _id: false
+  versionKey: false
 });
 
 ContentSchema.plugin(autoIncrement.plugin, { model: 'content', field: 'sn', startAt: 1 });

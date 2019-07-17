@@ -48,7 +48,8 @@ exports.search = ctx => {
     key,
   } = ctx.request.query;
 
-  return Content.find(utils.deleteUndefinedKeys({ type: ctx.contentType, userId, key }));
+  return Content.find(utils.deleteUndefinedKeys({ type: ctx.contentType, userId, key }))
+    .select('-_id sn title content userId thumbnail attachedFiles comments regDate type key');
 };
 
 exports.searchOne = ctx => {
@@ -59,7 +60,8 @@ exports.searchOne = ctx => {
     return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
   }
 
-  return Content.findOne({ sn });
+  return Content.findOne({ sn })
+    .select('-_id sn title content userId thumbnail attachedFiles comments regDate type key');
 };
 
 exports.update = ctx => {

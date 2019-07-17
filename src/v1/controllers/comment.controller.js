@@ -28,6 +28,20 @@ exports.create = (ctx) => {
     });
 };
 
+exports.search = (ctx) => {
+  const { sn } = ctx.params;
+
+  // check parameters 
+  if (!validator.isInt(sn + '')) {
+    return new Promise((resolve, reject) => { reject(new Error(utils.getResultMessage(RESULT_CODE.INVALID_PARAMS))); });
+  }
+
+  return Content.findOne({ sn })
+    .then(result => {
+      return result.comments;
+    });
+};
+
 exports.update = (ctx) => {
   const { content, userId } = ctx.request.body;
   const { sn, commentId } = ctx.params;
@@ -40,7 +54,8 @@ exports.update = (ctx) => {
   return Content.updateOne({ 'comments._id': commentId }, { 'comments.$': { content, userId }})
     .then(result => {
       return utils.getResultCodeByMongooseResult(result);
-    });};
+    });
+};
 
 exports.delete = (ctx) => {
   const { sn, commentId } = ctx.params;

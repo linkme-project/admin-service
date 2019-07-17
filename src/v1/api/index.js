@@ -80,6 +80,24 @@ async ctx => {
   }
 });
 
+contentApi.get([
+  '/notices/:sn/comments', 
+  '/faqs/:sn/comments', 
+  '/events/:sn/comments', 
+  '/questions/:sn/comments'], 
+async ctx => {
+  try {
+    const comments = await commentController.search(ctx);
+    if (comments) {
+      ctx.body = utils.createResponse (RESULT_CODE.SUCCESS, null, comments);
+    } else {
+      ctx.body = utils.createResponse (RESULT_CODE.API_CALL_ERROR, utils.getResultMessage(RESULT_CODE.API_CALL_ERROR), null);
+    }    
+  } catch(ex) {
+    ctx.body = utils.createResponse (RESULT_CODE.FAIL, ex.message, null);
+  }
+});
+
 contentApi.put([
   '/notices/:sn/comments/:commentId', 
   '/faqs/:sn/comments/:commentId', 
